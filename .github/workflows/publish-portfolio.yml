@@ -1,4 +1,4 @@
-name: Publish digital portfolio (V7.1)
+name: Publish digital portfolio (V7.2)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -18,6 +18,32 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out portfolio source
+        uses: actions/checkout@v4
+
+      - name: Set up image tooling
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate optimized portrait and social-sharing image
+        run: |
+          python -m pip install --disable-pip-version-check 'Pillow>=10,<13'
+          python scripts/build_assets.py
+
+      - name: Persist generated images for both GitHub Pages modes
+        run: |
+          set -euo pipefail
+          git add -- portrait.webp social-preview.png
+          if git diff --cached --quiet; then
+            echo "Portfolio images are up to date."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Generate optimized portrait and social preview [skip ci]"
+            git push origin HEAD:main
+          fi
+
       - name: Identify GitHub Pages publishing mode
         id: pages
         env:
@@ -34,11 +60,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
-          echo "Requested GitHub Pages to publish the latest main branch."
-
-      - name: Check out the portfolio
-        if: steps.pages.outputs.mode == 'workflow'
-        uses: actions/checkout@v4
+          echo "Requested a Pages build of the latest main branch."
 
       - name: Collect static website assets
         if: steps.pages.outputs.mode == 'workflow'
@@ -46,9 +68,11 @@ jobs:
           set -euo pipefail
           mkdir -p _site
           shopt -s nullglob
-          cp -a -- *.html *.jpg *.jpeg *.JPG *.png *.pdf _site/
+          cp -a -- *.html *.jpg *.jpeg *.JPG *.png *.webp *.pdf *.css *.js _site/
           touch _site/.nojekyll
           test -f _site/index.html
+          test -f _site/portrait.webp
+          test -f _site/social-preview.png
 
       - name: Configure GitHub Pages
         if: steps.pages.outputs.mode == 'workflow'
