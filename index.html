@@ -35,7 +35,10 @@
 .portrait-name{display:block;font-family:var(--serif);font-size:24px;line-height:1.2;letter-spacing:-.55px;font-weight:400}
 .portrait-role{display:block;color:var(--muted);font-size:9px;line-height:1.7;letter-spacing:.075em;text-transform:uppercase;margin-top:6px}
 .portrait-monogram{display:grid;place-items:center;width:34px;height:34px;flex-shrink:0;border:1px solid #ccd5c5;border-radius:50%;font-family:var(--serif);font-size:15px;letter-spacing:-1.1px;padding-right:1px}
-.portrait-badge{position:absolute;right:-18px;bottom:112px;transform:translate3d(var(--portrait-badge-x,0px),var(--portrait-badge-y,0px),65px) rotate(-4deg);padding:13px 17px;border:1px solid #c0d697;border-radius:11px;background:var(--lime);color:var(--ink);box-shadow:0 7px 18px #173c3518;pointer-events:none}
+.portrait-badge{position:absolute;right:-18px;bottom:112px;transform:translate3d(var(--portrait-badge-x,0px),var(--portrait-badge-y,0px),65px) rotate(-4deg);padding:11px 15px;min-width:206px;white-space:nowrap;text-align:left;border:1px solid #c0d697;border-radius:11px;background:var(--lime);color:var(--ink);box-shadow:0 7px 18px #173c3518;pointer-events:auto;cursor:pointer;z-index:2;transition:background-color .22s ease,border-color .22s ease}
+.portrait-badge:hover,.portrait-badge:focus-visible{background:#e4f8ad;border-color:#a5c778}
+.portrait-badge span,.portrait-badge strong{transition:opacity .2s ease,translate .2s ease}
+.portrait-badge.is-switching span,.portrait-badge.is-switching strong{opacity:0;translate:0 4px}
 .portrait-badge span{display:block;font-size:8px;letter-spacing:.12em;text-transform:uppercase;line-height:1.5}
 .portrait-badge strong{display:block;font-size:16px;font-weight:500;font-family:var(--serif);line-height:1.4;margin-top:2px}
 .portrait-controls{min-height:25px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:27px 6px 0;color:var(--muted)}
@@ -46,8 +49,8 @@
 .portrait-motion-toggle[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
 @media(max-width:1100px){.portrait-panel{max-width:375px}.portrait-name{font-size:23px}.portrait-badge{right:-10px}.portrait-identity{padding:17px 18px 19px}.portrait-role{font-size:8px}}
 @media(max-width:860px){.portrait-panel{padding:8px 6px 0}.portrait-name{font-size:21px}.portrait-identity{padding:16px}.portrait-monogram{display:none}.portrait-badge{padding:11px 13px;right:-8px;bottom:105px}.portrait-badge strong{font-size:15px}.portrait-controls{gap:7px;margin-top:23px;margin-inline:0}.portrait-hint{font-size:8px}.portrait-motion-toggle{font-size:8px;padding-inline:7px}}
-@media(max-width:700px){.hero{padding-top:29px}.portrait-panel{order:-1;width:min(75vw,270px);max-width:none;padding:8px 5px 0;margin:0 auto 2px}.hero-layout{gap:27px}.portrait-name{font-size:20px}.portrait-role{font-size:7px;margin-top:4px;letter-spacing:.06em}.portrait-identity{padding:14px 15px 16px}.portrait-card{border-radius:19px}.portrait-photo-wrap{margin:8px 8px 0;border-radius:12px 12px 4px 4px}.portrait-backplate,.portrait-keyline{border-radius:21px}.portrait-badge{right:-13px;bottom:84px;padding:10px 12px;transform:translateZ(35px) rotate(-4deg)}.portrait-badge span{font-size:7px}.portrait-badge strong{font-size:14px}.portrait-controls{display:none}.portrait-stack{transform:none!important}.portrait-glare{display:none}}
-@media(prefers-reduced-motion:reduce){.portrait-stack{transform:none!important;will-change:auto!important}.portrait-glare{display:none}.portrait-badge{transform:translateZ(35px) rotate(-4deg)!important}}
+@media(max-width:700px){.hero{padding-top:29px}.portrait-panel{order:-1;width:min(75vw,270px);max-width:none;padding:8px 5px 0;margin:0 auto 2px}.hero-layout{gap:27px}.portrait-name{font-size:20px}.portrait-role{font-size:7px;margin-top:4px;letter-spacing:.06em}.portrait-identity{padding:14px 15px 16px}.portrait-card{border-radius:19px}.portrait-photo-wrap{margin:8px 8px 0;border-radius:12px 12px 4px 4px}.portrait-backplate,.portrait-keyline{border-radius:21px}.portrait-badge{right:-13px;bottom:84px;padding:10px 12px;min-width:183px;transform:translateZ(35px) rotate(-4deg)}.portrait-badge span{font-size:7px}.portrait-badge strong{font-size:14px}.portrait-controls{display:none}.portrait-stack{transform:none!important}.portrait-glare{display:none}}
+@media(prefers-reduced-motion:reduce){.portrait-stack{transform:none!important;will-change:auto!important}.portrait-glare{display:none}.portrait-badge{transform:translateZ(35px) rotate(-4deg)!important}.portrait-badge span,.portrait-badge strong{transition:none!important}}
 @media print{.portrait-panel{max-width:250px}.portrait-controls,.portrait-badge,.portrait-keyline,.portrait-backplate{display:none!important}.portrait-stack,.portrait-card{transform:none!important}.portrait-card{box-shadow:none}}
 
 
@@ -298,7 +301,7 @@
 <span aria-hidden="true" class="portrait-monogram">CS</span>
 </div>
 </div>
-<div aria-hidden="true" class="portrait-badge"><span>From insight</span><strong>to meaningful action.</strong></div>
+<button aria-label="From insight to measurable impact. Activate to explore another message." class="portrait-badge" id="portrait-badge" type="button"><span id="portrait-badge-kicker">From insight</span><strong id="portrait-badge-line">to measurable impact.</strong></button>
 </div>
 </figure>
 <div class="portrait-controls">
@@ -679,6 +682,114 @@ document.getElementById('copy-email').addEventListener('click',async()=>{const e
   syncAvailability();
 })();
 
+</script>
+
+<script>
+/* Portrait brand tag: rotating messages, hover expertise, click/tap discovery. */
+(() => {
+  'use strict';
+  const badge = document.getElementById('portrait-badge');
+  const kicker = document.getElementById('portrait-badge-kicker');
+  const line = document.getElementById('portrait-badge-line');
+  if (!badge || !kicker || !line) return;
+
+  const messages = [
+    ['From insight', 'to measurable impact.'],
+    ['From complexity', 'to clarity.'],
+    ['From friction', 'to better experiences.']
+  ];
+  const expertise = ['My expertise', 'CX · Data · Automation.'];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const mouseHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+  let index = 0;
+  let visible = false;
+  let hovering = false;
+  let focused = false;
+  let timer = 0;
+  let fadeTimer = 0;
+
+  function render(message, immediate = false) {
+    window.clearTimeout(fadeTimer);
+    const apply = () => {
+      kicker.textContent = message[0];
+      line.textContent = message[1];
+      badge.setAttribute('aria-label', message.join(' ') + ' Activate to explore another message.');
+      badge.classList.remove('is-switching');
+    };
+    if (immediate || reducedMotion.matches) {
+      apply();
+    } else {
+      badge.classList.add('is-switching');
+      fadeTimer = window.setTimeout(apply, 190);
+    }
+  }
+
+  function stopRotation() {
+    window.clearTimeout(timer);
+    timer = 0;
+  }
+
+  function startRotation() {
+    stopRotation();
+    if (!visible || document.hidden || reducedMotion.matches || hovering || focused) return;
+    timer = window.setTimeout(() => {
+      index = (index + 1) % messages.length;
+      render(messages[index]);
+      startRotation();
+    }, 5000);
+  }
+
+  function previewExpertise() {
+    stopRotation();
+    render(expertise);
+  }
+
+  function restoreMessage() {
+    if (hovering || focused) return;
+    render(messages[index]);
+    startRotation();
+  }
+
+  badge.addEventListener('pointerenter', event => {
+    if (event.pointerType === 'mouse' && mouseHover.matches) {
+      hovering = true;
+      previewExpertise();
+    }
+  });
+  badge.addEventListener('pointerleave', () => {
+    hovering = false;
+    restoreMessage();
+  });
+  badge.addEventListener('focus', () => {
+    focused = true;
+    previewExpertise();
+  });
+  badge.addEventListener('blur', () => {
+    focused = false;
+    restoreMessage();
+  });
+  badge.addEventListener('click', () => {
+    index = (index + 1) % messages.length;
+    render(messages[index]);
+    startRotation();
+  });
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      visible = entries.some(entry => entry.isIntersecting);
+      startRotation();
+    }, { threshold: 0.35 });
+    observer.observe(badge);
+  } else {
+    visible = true;
+    startRotation();
+  }
+  document.addEventListener('visibilitychange', startRotation);
+  reducedMotion.addEventListener('change', () => {
+    render((hovering || focused) ? expertise : messages[index], true);
+    startRotation();
+  });
+})();
 </script>
 <script src="case-study-visuals.js" defer></script>
 </body>
