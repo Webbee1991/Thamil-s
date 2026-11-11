@@ -1,0 +1,65 @@
+name: Publish digital portfolio (V7.1)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: digital-portfolio-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Identify GitHub Pages publishing mode
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mode="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.build_type // "legacy"')"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "GitHub Pages publishing mode: $mode"
+
+      - name: Request a fresh branch-based Pages build
+        if: steps.pages.outputs.mode == 'legacy'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+          echo "Requested GitHub Pages to publish the latest main branch."
+
+      - name: Check out the portfolio
+        if: steps.pages.outputs.mode == 'workflow'
+        uses: actions/checkout@v4
+
+      - name: Collect static website assets
+        if: steps.pages.outputs.mode == 'workflow'
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          shopt -s nullglob
+          cp -a -- *.html *.jpg *.jpeg *.JPG *.png *.pdf _site/
+          touch _site/.nojekyll
+          test -f _site/index.html
+
+      - name: Configure GitHub Pages
+        if: steps.pages.outputs.mode == 'workflow'
+        uses: actions/configure-pages@v5
+
+      - name: Upload portfolio site
+        if: steps.pages.outputs.mode == 'workflow'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy portfolio site
+        if: steps.pages.outputs.mode == 'workflow'
+        uses: actions/deploy-pages@v4
