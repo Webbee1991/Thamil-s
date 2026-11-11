@@ -8,3 +8,4 @@ Professional portfolio covering business analysis, customer experience transform
 
 - Website entry point: [index.html](index.html)
 - Download résumé: [Chenthamil_Selvan_Resume_V7_1.pdf](Chenthamil_Selvan_Resume_V7_1.pdf)
+Portfolio V7.1 deployment refresh
